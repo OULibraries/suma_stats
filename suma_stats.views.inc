@@ -42,6 +42,27 @@ function suma_stats_views_data() {
       'handler' => 'suma_stats_handler_field',
     ),
   );
+  $data['suma_stats']['count'] = array(
+    'title' => t('Count'),
+    'help' => t('The count of this location'),
+    'field' => array(
+      'handler' => 'suma_stats_handler_field',
+    ),
+  );
+  $data['suma_stats']['incNum'] = array(
+    'title' => t('Incremental Number'),
+    'help' => t('The incremental number in which the span option is increased'),
+    'field' => array(
+      'handler' => 'suma_stats_handler_field',
+    ),
+  );
+  $data['suma_stats']['spanOption'] = array(
+    'title' => t('Span Option'),
+    'help' => t('The time span from which the start date is set'),
+    'field' => array(
+      'handler' => 'suma_stats_handler_field',
+    ),
+  );
 
   return $data;
 }

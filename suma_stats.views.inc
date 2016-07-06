@@ -63,6 +63,20 @@ function suma_stats_views_data() {
       'handler' => 'suma_stats_handler_field',
     ),
   );
+  $data['suma_stats']['date'] = array(
+    'title' => t('Date'),
+    'help' => t('The date of the count'),
+    'field' => array(
+      'handler' => 'suma_stats_handler_field_date',
+    ),
+  );
+  $data['suma_stats']['date_format'] = array(
+    'title' => t('Date Format'),
+    'help' => t('The date format of the count'),
+    'field' => array(
+      'handler' => 'suma_stats_field_option',
+    ),
+  );
 
   return $data;
 }

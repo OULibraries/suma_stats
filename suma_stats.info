@@ -7,3 +7,4 @@ package = Drupal 7 Development
 files[] = suma_stats.module
 files[] = handlers/suma_stats_handler_field.inc
 files[] = plugins/suma_stats_plugin_query.inc
+files[] = handlers/suma_stats_field_option.inc

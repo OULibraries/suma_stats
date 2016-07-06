@@ -16,3 +16,9 @@ class suma_stats_handler_field extends views_handler_field {
         $this->field_alias = $this->real_field;
     }
 }
+
+class suma_stats_handler_field_date extends views_handler_field_date {
+    function query() {
+        $this->field_alias = $this->real_field;
+    }
+}

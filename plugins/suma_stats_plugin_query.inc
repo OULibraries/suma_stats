@@ -71,7 +71,6 @@ class suma_stats_plugin_query extends views_plugin_query
           $row->count = 1;
 
           $view->result[] = $row;
-          dpm($row);
         }
       }
     }

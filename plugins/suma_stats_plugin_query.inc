@@ -49,25 +49,32 @@ class suma_stats_plugin_query extends views_plugin_query
     $arrayedLocation = explode(',',$preArrayLocation);
     $entLocation = $this->setArray($arrayedLocation, $sumadata);
 
+
     /**
      * looping through the returned data to set the rows of the view
      */
-
-
-
     foreach ($sumadata as $location) {
+
       if (isset($location->id)) {
-        $row = new stdClass();
-        $row->title = $location->title;
-        $row->id = $location->id;
-        $row->incNum = $incNum;
-        $row->spanOption = $spanOption;
-//        $row->count = ($ct == 'tally') ? $this->getTally($location, $entLocation, $entActivity, $entActivityGroup) :
-//                    $this->getCount($location, $entLocation, $entActivity, $entActivityGroup);
-        $row->count = 6;
-        $view->result[] = $row;
+
+        /**
+         * Turn counts in to rows
+         */
+        foreach ($location->counts as $entry) {
+          $row = new stdClass();
+          $row->title = $location->title;
+          $row->id = $location->id;
+          $row->incNum = $incNum;
+          $row->spanOptions = $spanOptions;
+          /* Views needs a unix timestamp */
+          $row->date = strtotime($entry->time);
+          $row->count = 1;
+
+          $view->result[] = $row;
+          dpm($row);
+        }
       }
-    } dpm($view->result);
+    }
   }
 
   /**
@@ -110,7 +117,7 @@ class suma_stats_plugin_query extends views_plugin_query
         $count[$i]['activities'] = $cc->activities;
         $i++;
       }
-    } dpm($count);
+    }
     return $count;
   }
 

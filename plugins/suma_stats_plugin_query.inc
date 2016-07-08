@@ -1,13 +1,12 @@
 <?php
+
 /**
  * @file
  *   Views query plugin for suma stats.
  */
-class suma_stats_plugin_query extends views_plugin_query
-{
+class suma_stats_plugin_query extends views_plugin_query {
 
-  function query($get_count = FALSE)
-  {
+  function query($get_count = FALSE) {
   }
 
   /**
@@ -15,7 +14,6 @@ class suma_stats_plugin_query extends views_plugin_query
    * gets number of counts for given parameters from suma
    */
   function execute(&$view) {
-
     //@todo add better error handling here
     //setting server variable
     $mySuma = variable_get('suma_stats_server', "");
@@ -35,6 +33,7 @@ class suma_stats_plugin_query extends views_plugin_query
     $ct = $this->options['ct'];
     $collection = $this->options['collection'];
     $format = $this->options['format'];
+    $scale = $this->options['suma_date_group_format'];
 
     //setting the variables to lowercase if they are not numeric
     $entActivity = is_numeric($this->options['activity']) ? $this->options['activity'] : strtolower($this->options['activity']);
@@ -42,14 +41,16 @@ class suma_stats_plugin_query extends views_plugin_query
     $startDate = $this->getStartTime($incNum, $spanOption);
 
     //passing the parameters to the api..this may need revised for more options or empty parameters
-    $suma_url = variable_get('suma_stats_server', "") .  '/query/counts?id=' . $collection . '&format=%27' . $format . '%27&sdate=' . $startDate;
+    $suma_url = variable_get('suma_stats_server', "") . '/query/counts?id=' . $collection . '&format=%27' . $format . '%27&sdate=' . $startDate;
     $response = drupal_http_request($suma_url);
     $sumadata = json_decode($response->data);
     $preArrayLocation = $this->options['location'];
-    $arrayedLocation = explode(',',$preArrayLocation);
+    $arrayedLocation = explode(',', $preArrayLocation);
     $entLocation = $this->setArray($arrayedLocation, $sumadata);
+    $suma_ag_data = array();
 
-
+    dpm($sumadata);
+    $this->trunc_date(1, '2016-01-25 22:40:20');
     /**
      * looping through the returned data to set the rows of the view
      */
@@ -61,18 +62,28 @@ class suma_stats_plugin_query extends views_plugin_query
          * Turn counts in to rows
          */
         foreach ($location->counts as $entry) {
-          $row = new stdClass();
-          $row->title = $location->title;
-          $row->id = $location->id;
-          $row->incNum = $incNum;
-          $row->spanOptions = $spanOptions;
-          /* Views needs a unix timestamp */
-          $row->date = strtotime($entry->time);
-          $row->count = 1;
+          $temp_time = $this->trunc_date($scale, $entry->time);
+          $coord = $location->title . "|" . $location->id . "|" . $temp_time;
 
-          $view->result[] = $row;
+          if (isset($suma_ag_data[$coord])) {
+            $suma_ag_data[$coord]++;
+          }
+          else {
+            $suma_ag_data[$coord] = 1;
+          }
         }
       }
+    }
+    foreach ($suma_ag_data as $coords => $count) {
+      $row = new stdClass();
+      $temp_row = explode("|", $coords);
+      array_push($temp_row, $count);
+      $row->date = strtotime($temp_row[2]);
+      $row->title = $temp_row[0];
+      $row->id = $temp_row[1];
+      $row->count = $temp_row[3];
+      $view->result[] = $row;
+
     }
   }
 
@@ -104,20 +115,43 @@ class suma_stats_plugin_query extends views_plugin_query
     $count = array();
     $i = 0;
     if (!isset($location->counts)) {
-      return null;
+      return NULL;
     }
     foreach ($location->counts as $cc) {
       $count[$i] = array();
       if (in_array($cc->location, $loc)) {
         $count[$i]['id'] = $cc->id;
-        $date = new DateTime($cc->time);
-        $count[$i]['date'] = $date->getTimestamp();
         $count[$i]['location'] = $cc->location;
         $count[$i]['activities'] = $cc->activities;
         $i++;
       }
     }
     return $count;
+  }
+
+  function trunc_date($scale, $time) {
+    //evaluates $scale which is the group by function the user chose
+    //and sets it to the proper string format for comparison
+    switch ($scale) {
+      case 'hour':
+        $fd = 'Y-m-d-H';
+        break;
+      case 'day':
+        $fd = 'Y-m-d';
+        break;
+      case 'month':
+        $fd = 'Y-m';
+        break;
+      case 'year':
+        $fd = 'Y';
+        break;
+      default:
+        $fd = 'Y-m';
+    }
+
+    $date = new DateTime($time);
+    $temp_date = $date->format($fd);
+    return $temp_date;
   }
 
   /**
@@ -129,7 +163,7 @@ class suma_stats_plugin_query extends views_plugin_query
    */
   function getStartTime($inc = 0, $span = 0) {
     //setting a start date if start date was deleted
-    $time = date('Y-m-d H:i:s', strtotime('-'.$inc. ' ' .$span .' '));
+    $time = date('Y-m-d H:i:s', strtotime('-' . $inc . ' ' . $span . ' '));
     $newDate = new DateTime($time, new DateTimeZone('UTC'));
     $newDate->setTimezone(new DateTimeZone('America/Chicago'));
     $defaultDate = $newDate->format('YmdHi');
@@ -154,11 +188,15 @@ class suma_stats_plugin_query extends views_plugin_query
         }
       }
     }
-   return $tempLoc;
+    return $tempLoc;
   }
 
-  function option_definition()
-  {
+  /**
+   * @return array
+   *
+   * option defaults for query settings
+   */
+  function option_definition() {
     $options = parent::option_definition();
 
     $options['collection'] = array(
@@ -179,16 +217,15 @@ class suma_stats_plugin_query extends views_plugin_query
     $options['ct'] = array(
       'default' => 'tally',
     );
-    $options['incNum'] = array(
-      'default' =>'1',
+    $options['suma_date_group_format'] = array(
+      'default' => 'day',
     );
-    $options['spanOptions'] = array(
-      'default' => 'hours',
+    $options['suma_date_range_span1'] = array(
+      'default' => 'years',
     );
-    //may use this option in the future
-//    $options['datetime'] = array(
-//      'default' => $defaultDate,
-//    );
+    $options['suma_date_range_increment'] = array(
+      'default' => '1',
+    );
 
     return $options;
   }
@@ -197,10 +234,9 @@ class suma_stats_plugin_query extends views_plugin_query
    * @param $form
    * @param $form_state
    *
-   * Creating the fields for the view
+   * Creating the fields for the query settings view
    */
-  function options_form(&$form, &$form_state)
-  {
+  function options_form(&$form, &$form_state) {
     $form = parent::options_form($form, $form_state);
 
     $form['collection'] = array(
@@ -247,36 +283,38 @@ class suma_stats_plugin_query extends views_plugin_query
         'tally' => t('Tally'),
       ),
     );
-    $form['incNum'] = array(
+    $form['suma_date_group_format'] = array(
+      '#title' => t('Date Format Options'),
+      '#type' => 'select',
+      '#description' => 'Enter format in which you would like the counts to be grouped',
+      '#options' => array(
+//        'hour' => 'Hour',
+        'day' => 'Day',
+        'month' => 'Month',
+        'year' => 'Year',
+        'hour' => 'Hour',
+      ),
+      '#default_value' => (isset($this->options['suma_date_group_format'])) ? $this->options['suma_date_group_format'] : 'day',
+    );
+    $form['suma_date_range_increment'] = array(
       '#type' => 'textfield',
       '#title' => t('Incremental Number'),
       '#description' => t('Enter the incremental number to coincide with the span field below'),
-      '#default_value' => $this->options['incNum'],
+      '#default_value' => $this->options['suma_date_range_increment'],
       '#maxlength' => 10,
       '#size' => 10,
     );
-    $form['spanOptions'] = array(
-      '#type' => 'radios',
+    $form['suma_date_range_span1'] = array(
+      '#type' => 'select',
       '#title' => t('Span of time'),
-      '#description' => t('Check the radio to go with the number entered in the number field above.'),
-      '#default_value' => $this->options['spanOptions'],
+      '#description' => t('Select the option to go with the number entered in the number field above.'),
       '#options' => array(
         'hours' => t('hours ago'),
         'days' => t('days ago'),
         'months' => t('months ago'),
         'years' => t('years ago'),
       ),
+      '#default_value' => (isset($this->options['suma_date_range_span1'])) ? $this->options['suma_date_range_span1'] : 'days',
     );
-    //This has been commented out because if we use a date picker it will be static
-    //in the future we may revisit this option
-//    $form['datetime'] = array(
-//      '#type' => 'date_select',
-//      '#title' => 'Start Date',
-//      '#date_format' => 'YmdHi',
-//      '#date_timezone' => 'America/Chicago',
-//      '#default_value' => $this->options['datetime'],
-//      '#date_year_range' => '-100:+0',
-//    );
   }
-
 }

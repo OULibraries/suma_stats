@@ -15,6 +15,8 @@ function suma_stats_views_plugins() {
 
 /**
  * Implements hook_views_data().
+ * 
+ * the actual fields from which the user can choose in the view
  */
 function suma_stats_views_data() {
   $data = array();
@@ -49,20 +51,20 @@ function suma_stats_views_data() {
       'handler' => 'suma_stats_handler_field',
     ),
   );
-  $data['suma_stats']['incNum'] = array(
-    'title' => t('Incremental Number'),
-    'help' => t('The incremental number in which the span option is increased'),
-    'field' => array(
-      'handler' => 'suma_stats_handler_field',
-    ),
-  );
-  $data['suma_stats']['spanOption'] = array(
-    'title' => t('Span Option'),
-    'help' => t('The time span from which the start date is set'),
-    'field' => array(
-      'handler' => 'suma_stats_handler_field',
-    ),
-  );
+//  $data['suma_stats']['incNum'] = array(
+//    'title' => t('Incremental Number'),
+//    'help' => t('The incremental number in which the span option is increased'),
+//    'field' => array(
+//      'handler' => 'suma_stats_handler_field',
+//    ),
+//  );
+//  $data['suma_stats']['spanOption'] = array(
+//    'title' => t('Span Option'),
+//    'help' => t('The time span from which the start date is set'),
+//    'field' => array(
+//      'handler' => 'suma_stats_handler_field',
+//    ),
+//  );
   $data['suma_stats']['date'] = array(
     'title' => t('Date'),
     'help' => t('The date of the count'),

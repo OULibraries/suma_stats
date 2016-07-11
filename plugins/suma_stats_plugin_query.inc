@@ -24,18 +24,19 @@ class suma_stats_plugin_query extends views_plugin_query {
     $time = date('Y-m-d H:i:s', strtotime('-1 hour'));
     $newDate = new DateTime($time, new DateTimeZone('UTC'));
     $newDate->setTimezone(new DateTimeZone('America/Chicago'));
-    $defaultDate = $newDate->format('YmdHi');
+//    $defaultDate = $newDate->format('YmdHi');
 
     //number of days, months, etc
-    $incNum = $this->options['incNum'];
+    $incNum = $this->options['incnum'];
     //option for days, months, etc
-    $spanOption = $this->options['spanOptions'];
-    $ct = $this->options['ct'];
+    $spanOption = $this->options['spanOption'];
+//    $ct = $this->options['ct'];
     $collection = $this->options['collection'];
     $format = $this->options['format'];
     $scale = $this->options['suma_date_group_format'];
 
     //setting the variables to lowercase if they are not numeric
+    //the following two variables need to be put in place before this is public
     $entActivity = is_numeric($this->options['activity']) ? $this->options['activity'] : strtolower($this->options['activity']);
     $entActivityGroup = is_numeric($this->options['activityGroup']) ? $this->options['activityGroup'] : strtolower($this->options['activityGroup']);
     $startDate = $this->getStartTime($incNum, $spanOption);
@@ -49,15 +50,11 @@ class suma_stats_plugin_query extends views_plugin_query {
     $entLocation = $this->setArray($arrayedLocation, $sumadata);
     $suma_ag_data = array();
 
-    dpm($sumadata);
-    $this->trunc_date(1, '2016-01-25 22:40:20');
     /**
      * looping through the returned data to set the rows of the view
      */
     foreach ($sumadata as $location) {
-
       if (isset($location->id)) {
-
         /**
          * Turn counts in to rows
          */
@@ -98,36 +95,36 @@ class suma_stats_plugin_query extends views_plugin_query {
    * this does not currently allow the view to count 'all' locations
    * @todo add functionality to account for 'all' locations
    */
-  function getTally($location, $loc, $act, $actG) {
-    $tally = 0;
-    if (!isset($location->counts)) {
-      return $tally;
-    }
-    foreach ($location->counts as $cc) {
-      if (in_array($cc->location, $loc)) {
-        $tally += 1;
-      }
-    }
-    return $tally;
-  }
-
-  function getCount($location, $loc, $act, $actG) {
-    $count = array();
-    $i = 0;
-    if (!isset($location->counts)) {
-      return NULL;
-    }
-    foreach ($location->counts as $cc) {
-      $count[$i] = array();
-      if (in_array($cc->location, $loc)) {
-        $count[$i]['id'] = $cc->id;
-        $count[$i]['location'] = $cc->location;
-        $count[$i]['activities'] = $cc->activities;
-        $i++;
-      }
-    }
-    return $count;
-  }
+//  function getTally($location, $loc, $act, $actG) {
+//    $tally = 0;
+//    if (!isset($location->counts)) {
+//      return $tally;
+//    }
+//    foreach ($location->counts as $cc) {
+//      if (in_array($cc->location, $loc)) {
+//        $tally += 1;
+//      }
+//    }
+//    return $tally;
+//  }
+//
+//  function getCount($location, $loc, $act, $actG) {
+//    $count = array();
+//    $i = 0;
+//    if (!isset($location->counts)) {
+//      return NULL;
+//    }
+//    foreach ($location->counts as $cc) {
+//      $count[$i] = array();
+//      if (in_array($cc->location, $loc)) {
+//        $count[$i]['id'] = $cc->id;
+//        $count[$i]['location'] = $cc->location;
+//        $count[$i]['activities'] = $cc->activities;
+//        $i++;
+//      }
+//    }
+//    return $count;
+//  }
 
   function trunc_date($scale, $time) {
     //evaluates $scale which is the group by function the user chose
@@ -163,7 +160,7 @@ class suma_stats_plugin_query extends views_plugin_query {
    */
   function getStartTime($inc = 0, $span = 0) {
     //setting a start date if start date was deleted
-    $time = date('Y-m-d H:i:s', strtotime('-' . $inc . ' ' . $span . ' '));
+    $time = date('Y-m-d H:i:s', strtotime('-' . $inc . ' ' . $span . ' ')); dpm($time);
     $newDate = new DateTime($time, new DateTimeZone('UTC'));
     $newDate->setTimezone(new DateTimeZone('America/Chicago'));
     $defaultDate = $newDate->format('YmdHi');
@@ -214,16 +211,16 @@ class suma_stats_plugin_query extends views_plugin_query {
     $options['activityGroup'] = array(
       'default' => '',
     );
-    $options['ct'] = array(
-      'default' => 'tally',
-    );
+//    $options['ct'] = array(
+//      'default' => 'tally',
+//    );
     $options['suma_date_group_format'] = array(
       'default' => 'day',
     );
-    $options['suma_date_range_span1'] = array(
+    $options['spanOption'] = array(
       'default' => 'years',
     );
-    $options['suma_date_range_increment'] = array(
+    $options['incnum'] = array(
       'default' => '1',
     );
 
@@ -273,22 +270,21 @@ class suma_stats_plugin_query extends views_plugin_query {
       '#description' => t('Type the name or ID of the activity group'),
       '#default_value' => $this->options['activityGroup'],
     );
-    $form['ct'] = array(
-      '#type' => 'radios',
-      '#title' => t('Count or Tally'),
-      '#description' => t('Select Count for all counts and select Tally for a total'),
-      '#default_value' => $this->options['ct'],
-      '#options' => array(
-        'count' => t('Count'),
-        'tally' => t('Tally'),
-      ),
-    );
+//    $form['ct'] = array(
+//      '#type' => 'radios',
+//      '#title' => t('Count or Tally'),
+//      '#description' => t('Select Count for all counts and select Tally for a total'),
+//      '#default_value' => $this->options['ct'],
+//      '#options' => array(
+//        'count' => t('Count'),
+//        'tally' => t('Tally'),
+//      ),
+//    );
     $form['suma_date_group_format'] = array(
-      '#title' => t('Date Format Options'),
+      '#title' => t('Date Group By Options'),
       '#type' => 'select',
       '#description' => 'Enter format in which you would like the counts to be grouped',
       '#options' => array(
-//        'hour' => 'Hour',
         'day' => 'Day',
         'month' => 'Month',
         'year' => 'Year',
@@ -296,15 +292,15 @@ class suma_stats_plugin_query extends views_plugin_query {
       ),
       '#default_value' => (isset($this->options['suma_date_group_format'])) ? $this->options['suma_date_group_format'] : 'day',
     );
-    $form['suma_date_range_increment'] = array(
+    $form['incnum'] = array(
       '#type' => 'textfield',
       '#title' => t('Incremental Number'),
       '#description' => t('Enter the incremental number to coincide with the span field below'),
-      '#default_value' => $this->options['suma_date_range_increment'],
+      '#default_value' => $this->options['incnum'],
       '#maxlength' => 10,
       '#size' => 10,
     );
-    $form['suma_date_range_span1'] = array(
+    $form['spanOption'] = array(
       '#type' => 'select',
       '#title' => t('Span of time'),
       '#description' => t('Select the option to go with the number entered in the number field above.'),
@@ -314,7 +310,7 @@ class suma_stats_plugin_query extends views_plugin_query {
         'months' => t('months ago'),
         'years' => t('years ago'),
       ),
-      '#default_value' => (isset($this->options['suma_date_range_span1'])) ? $this->options['suma_date_range_span1'] : 'days',
+      '#default_value' => (isset($this->options['spanOption'])) ? $this->options['spanOption'] : 'days',
     );
   }
 }

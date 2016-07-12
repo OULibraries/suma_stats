@@ -24,27 +24,28 @@ class suma_stats_plugin_query extends views_plugin_query {
     $time = date('Y-m-d H:i:s', strtotime('-1 hour'));
     $newDate = new DateTime($time, new DateTimeZone('UTC'));
     $newDate->setTimezone(new DateTimeZone('America/Chicago'));
-//    $defaultDate = $newDate->format('YmdHi');
 
     //number of days, months, etc
     $incNum = $this->options['incnum'];
+
     //option for days, months, etc
     $spanOption = $this->options['spanOption'];
-//    $ct = $this->options['ct'];
     $collection = $this->options['collection'];
     $format = $this->options['format'];
     $scale = $this->options['suma_date_group_format'];
 
-    //setting the variables to lowercase if they are not numeric
+    //set the variables to lowercase if they are not numeric
     //the following two variables need to be put in place before this is public
     $entActivity = is_numeric($this->options['activity']) ? $this->options['activity'] : strtolower($this->options['activity']);
     $entActivityGroup = is_numeric($this->options['activityGroup']) ? $this->options['activityGroup'] : strtolower($this->options['activityGroup']);
     $startDate = $this->getStartTime($incNum, $spanOption);
 
-    //passing the parameters to the api..this may need revised for more options or empty parameters
+    //pass the parameters to the api..this may need revised for more options or empty parameters
     $suma_url = variable_get('suma_stats_server', "") . '/query/counts?id=' . $collection . '&format=%27' . $format . '%27&sdate=' . $startDate;
     $response = drupal_http_request($suma_url);
     $sumadata = json_decode($response->data);
+
+    //set the location to an array so that multiple locations may be passed in
     $preArrayLocation = $this->options['location'];
     $arrayedLocation = explode(',', $preArrayLocation);
     $entLocation = $this->setArray($arrayedLocation, $sumadata);
@@ -56,7 +57,7 @@ class suma_stats_plugin_query extends views_plugin_query {
     foreach ($sumadata as $location) {
       if (isset($location->id)) {
         /**
-         * Turn counts in to rows
+         * Turn counts into rows
          */
         foreach ($location->counts as $entry) {
           $temp_time = $this->trunc_date($scale, $entry->time);
@@ -70,7 +71,7 @@ class suma_stats_plugin_query extends views_plugin_query {
           }
         }
       }
-    }
+    } 
     foreach ($suma_ag_data as $coords => $count) {
       $row = new stdClass();
       $temp_row = explode("|", $coords);
@@ -80,55 +81,18 @@ class suma_stats_plugin_query extends views_plugin_query {
       $row->id = $temp_row[1];
       $row->count = $temp_row[3];
       $view->result[] = $row;
-
-    }
-  }
+    } 
+   }
 
   /**
-   * @param $location
-   * @param $loc
-   * @param $act
-   * @param $actG
-   * @return int
+   * @param $scale
+   * @param $time
+   * @return string
    *
-   * if the results match the entered parameters this will increase the count by 1
-   * this does not currently allow the view to count 'all' locations
-   * @todo add functionality to account for 'all' locations
+   * evaluates $scale which is the group by function the user chose
+   * and sets it to the proper string format for comparison
    */
-//  function getTally($location, $loc, $act, $actG) {
-//    $tally = 0;
-//    if (!isset($location->counts)) {
-//      return $tally;
-//    }
-//    foreach ($location->counts as $cc) {
-//      if (in_array($cc->location, $loc)) {
-//        $tally += 1;
-//      }
-//    }
-//    return $tally;
-//  }
-//
-//  function getCount($location, $loc, $act, $actG) {
-//    $count = array();
-//    $i = 0;
-//    if (!isset($location->counts)) {
-//      return NULL;
-//    }
-//    foreach ($location->counts as $cc) {
-//      $count[$i] = array();
-//      if (in_array($cc->location, $loc)) {
-//        $count[$i]['id'] = $cc->id;
-//        $count[$i]['location'] = $cc->location;
-//        $count[$i]['activities'] = $cc->activities;
-//        $i++;
-//      }
-//    }
-//    return $count;
-//  }
-
   function trunc_date($scale, $time) {
-    //evaluates $scale which is the group by function the user chose
-    //and sets it to the proper string format for comparison
     switch ($scale) {
       case 'hour':
         $fd = 'Y-m-d-H';
@@ -160,7 +124,7 @@ class suma_stats_plugin_query extends views_plugin_query {
    */
   function getStartTime($inc = 0, $span = 0) {
     //setting a start date if start date was deleted
-    $time = date('Y-m-d H:i:s', strtotime('-' . $inc . ' ' . $span . ' ')); dpm($time);
+    $time = date('Y-m-d H:i:s', strtotime('-' . $inc . ' ' . $span . ' '));
     $newDate = new DateTime($time, new DateTimeZone('UTC'));
     $newDate->setTimezone(new DateTimeZone('America/Chicago'));
     $defaultDate = $newDate->format('YmdHi');
@@ -211,9 +175,6 @@ class suma_stats_plugin_query extends views_plugin_query {
     $options['activityGroup'] = array(
       'default' => '',
     );
-//    $options['ct'] = array(
-//      'default' => 'tally',
-//    );
     $options['suma_date_group_format'] = array(
       'default' => 'day',
     );
@@ -270,16 +231,6 @@ class suma_stats_plugin_query extends views_plugin_query {
       '#description' => t('Type the name or ID of the activity group'),
       '#default_value' => $this->options['activityGroup'],
     );
-//    $form['ct'] = array(
-//      '#type' => 'radios',
-//      '#title' => t('Count or Tally'),
-//      '#description' => t('Select Count for all counts and select Tally for a total'),
-//      '#default_value' => $this->options['ct'],
-//      '#options' => array(
-//        'count' => t('Count'),
-//        'tally' => t('Tally'),
-//      ),
-//    );
     $form['suma_date_group_format'] = array(
       '#title' => t('Date Group By Options'),
       '#type' => 'select',

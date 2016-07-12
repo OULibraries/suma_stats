@@ -49,6 +49,13 @@ function suma_stats_views_data() {
     'help' => t('The count of this location'),
     'field' => array(
       'handler' => 'suma_stats_handler_field',
+      'click sortable' => TRUE,
+    ),
+    'filter' => array(
+      'handler' => 'views_handler_filter_numeric',
+    ),
+    'sort' => array(
+      'handler' => 'views_handler_sort',
     ),
   );
 //  $data['suma_stats']['incNum'] = array(

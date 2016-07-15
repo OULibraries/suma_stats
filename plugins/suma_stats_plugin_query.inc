@@ -55,7 +55,7 @@ class suma_stats_plugin_query extends views_plugin_query {
      * looping through the returned data to set the rows of the view
      */
     foreach ($sumadata as $location) {
-      if (isset($location->id)) {
+      if (isset($location->counts)) {
         /**
          * Turn counts into rows
          */

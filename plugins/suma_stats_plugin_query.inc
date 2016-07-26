@@ -60,6 +60,9 @@ class suma_stats_plugin_query extends views_plugin_query {
          * Turn counts into rows
          */
         foreach ($location->counts as $entry) {
+          if (($entLocation != '') && (!in_array($entry->location, $entLocation))){
+            continue;
+          };
           $temp_time = $this->trunc_date($scale, $entry->time);
           $coord = $location->title . "|" . $location->id . "|" . $temp_time;
 
@@ -71,7 +74,7 @@ class suma_stats_plugin_query extends views_plugin_query {
           }
         }
       }
-    } 
+    }
     foreach ($suma_ag_data as $coords => $count) {
       $row = new stdClass();
       $temp_row = explode("|", $coords);

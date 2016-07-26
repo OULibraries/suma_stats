@@ -36,8 +36,6 @@ class suma_stats_plugin_query extends views_plugin_query {
 
     //set the variables to lowercase if they are not numeric
     //the following two variables need to be put in place before this is public
-//    $entActivity = is_numeric($this->options['activity']) ? $this->options['activity'] : strtolower($this->options['activity']);
-    $entActivityGroup = is_numeric($this->options['activityGroup']) ? $this->options['activityGroup'] : strtolower($this->options['activityGroup']);
     $startDate = $this->getStartTime($incNum, $spanOption);
 
     //pass the parameters to the api..this may need revised for more options or empty parameters
@@ -83,7 +81,7 @@ class suma_stats_plugin_query extends views_plugin_query {
           }
         }
       }
-    } dpm($suma_ag_data);
+    }
     foreach ($suma_ag_data as $coords => $count) {
       $row = new stdClass();
       $temp_row = explode("|", $coords);

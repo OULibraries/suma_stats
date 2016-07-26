@@ -36,8 +36,6 @@ class suma_stats_plugin_query extends views_plugin_query {
 
     //set the variables to lowercase if they are not numeric
     //the following two variables need to be put in place before this is public
-    $entActivity = is_numeric($this->options['activity']) ? $this->options['activity'] : strtolower($this->options['activity']);
-    $entActivityGroup = is_numeric($this->options['activityGroup']) ? $this->options['activityGroup'] : strtolower($this->options['activityGroup']);
     $startDate = $this->getStartTime($incNum, $spanOption);
 
     //pass the parameters to the api..this may need revised for more options or empty parameters
@@ -49,6 +47,12 @@ class suma_stats_plugin_query extends views_plugin_query {
     $preArrayLocation = $this->options['location'];
     $arrayedLocation = explode(',', $preArrayLocation);
     $entLocation = $this->setArray($arrayedLocation, $sumadata);
+
+    //set the activities to an array so that multiple locations may be passed in
+    $preArrayActivity = $this->options['activity'];
+    $arrayedActivity = explode(',', $preArrayActivity);
+    $entActivity = $this->setArrayAct($arrayedActivity, $sumadata);
+
     $suma_ag_data = array();
 
     /**
@@ -63,6 +67,9 @@ class suma_stats_plugin_query extends views_plugin_query {
           if (($entLocation != '') && (!in_array($entry->location, $entLocation))){
             continue;
           };
+          if (($entActivity != '') && (count(array_intersect($entry->activities, $entActivity)) == 0)) {
+            continue;
+          }
           $temp_time = $this->trunc_date($scale, $entry->time);
           $coord = $location->title . "|" . $location->id . "|" . $temp_time;
 
@@ -137,6 +144,7 @@ class suma_stats_plugin_query extends views_plugin_query {
   /**
    * @param $location
    * @return array
+   * @param $tempLoc
    *
    * takes array of string and numeric locations and compares
    * that to the title and ids of the available locations and
@@ -153,6 +161,28 @@ class suma_stats_plugin_query extends views_plugin_query {
       }
     }
     return $tempLoc;
+  }
+
+  /**
+   * @param $tempAct
+   * @param $activity
+   * @return mixed
+   *
+   * takes array of string and numeric activities and compares
+   * that to the title and ids of the available activities and
+   * then converts the strings(titles) to the numeric value(id)
+   */
+  function setArrayAct($tempAct, $activity) {
+    foreach ($tempAct as $key => $value) {
+      $tempAct[$key] = is_numeric($value) ? $value : strtolower($value);
+      if (!is_numeric($tempAct[$key])) {
+        $tempAct[$key] = strtolower($value);
+        foreach ($activity->initiative->dictionary->activities as $acts) {
+          $tempAct[$key] = ($tempAct[$key] == strtolower($acts->title)) ? $acts->id : $tempAct[$key];
+        }
+      }
+    }
+    return $tempAct;
   }
 
   /**

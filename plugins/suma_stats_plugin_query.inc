@@ -51,7 +51,7 @@ class suma_stats_plugin_query extends views_plugin_query {
     //set the activities to an array so that multiple locations may be passed in
     $preArrayActivity = $this->options['activity'];
     $arrayedActivity = explode(',', $preArrayActivity);
-    $entActivity = $this->setArrayAct($arrayedActivity, $sumadata);
+    $entActivity = ($arrayedActivity[0] == 'all') ? $arrayedActivity : $this->setArrayAct($arrayedActivity, $sumadata);
 
     $suma_ag_data = array();
 
@@ -64,14 +64,17 @@ class suma_stats_plugin_query extends views_plugin_query {
          * Turn counts into rows
          */
         foreach ($location->counts as $entry) {
-          if (($entLocation != '') && (!in_array($entry->location, $entLocation))){
+          if ((array_filter($entLocation)) && (!in_array($entry->location, $entLocation))) {
             continue;
           };
-          if (($entActivity != '') && (count(array_intersect($entry->activities, $entActivity)) == 0)) {
+          if ((array_filter($entActivity)) && (count(array_intersect($entry->activities, $entActivity)) == 0) && ($entActivity[0] != 'all')) {
             continue;
           }
           $temp_time = $this->trunc_date($scale, $entry->time);
-          $coord = $location->title . "|" . $location->id . "|" . $temp_time;
+          $specActivity = $this->pickSpecActivity($entActivity, $entry->activities, $location->dictionary->activities);
+//          $coord = $location->title . "|" . $location->id . "|" . $temp_time;
+
+          $coord = $location->title . "|" . $location->id . "|" . $temp_time . "|" . $specActivity;
 
           if (isset($suma_ag_data[$coord])) {
             $suma_ag_data[$coord]++;
@@ -89,7 +92,8 @@ class suma_stats_plugin_query extends views_plugin_query {
       $row->date = strtotime($temp_row[2]);
       $row->title = $temp_row[0];
       $row->id = $temp_row[1];
-      $row->count = $temp_row[3];
+      $row->count = $temp_row[4];
+      $row->activity = $temp_row[3];
       $view->result[] = $row;
     } 
    }
@@ -123,6 +127,20 @@ class suma_stats_plugin_query extends views_plugin_query {
     $date = new DateTime($time);
     $temp_date = $date->format($fd);
     return $temp_date;
+  }
+
+  function pickSpecActivity($entered, $returned, $allActs) {
+    foreach ($returned as $ret) {
+      if (in_array($ret, $entered) || $entered[0] == 'all') {
+        foreach ($allActs as $acts) {
+          if ($acts->id == $ret) {
+            $tempTitle = $acts->title;
+            return $tempTitle;
+          }
+        }
+      }
+    }
+    return 'notgiven';
   }
 
   /**
@@ -255,7 +273,9 @@ class suma_stats_plugin_query extends views_plugin_query {
     $form['activity'] = array(
       '#type' => 'textfield',
       '#title' => t('Activity'),
-      '#description' => t('Type the name or ID of the activity'),
+      '#description' => t('Type the name or ID of the activity. Enter a comma (,) separated list of locations.
+      Do not put a space after the commas. Enter \'all\' to return the counts separated by activity. Leave blank 
+      to return all results grouped by date.'),
       '#default_value' => $this->options['activity'],
     );
     $form['activityGroup'] = array(

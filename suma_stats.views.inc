@@ -39,7 +39,14 @@ function suma_stats_views_data() {
   );
   $data['suma_stats']['id'] = array(
     'title' => t('ID'),
-    'help' => t('The id of this report'),
+    'help' => t('The id of this count'),
+    'field' => array(
+      'handler' => 'suma_stats_handler_field',
+    ),
+  );
+  $data['suma_stats']['activity'] = array(
+    'title' => t('Activity'),
+    'help' => t('The activity of this count'),
     'field' => array(
       'handler' => 'suma_stats_handler_field',
     ),

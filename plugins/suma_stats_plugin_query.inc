@@ -70,6 +70,10 @@ class suma_stats_plugin_query extends views_plugin_query {
           if ((array_filter($entActivity)) && (count(array_intersect($entry->activities, $entActivity)) == 0) && ($entActivity[0] != 'all')) {
             continue;
           }
+          //we don't want the 'no activity' results
+          //@todo we may make this an option later
+          if (in_array('-1', $entry->activities)) continue;
+
           $temp_time = $this->trunc_date($scale, $entry->time);
           $specActivity = $this->pickSpecActivity($entActivity, $entry->activities, $location->dictionary->activities);
 //          $coord = $location->title . "|" . $location->id . "|" . $temp_time;

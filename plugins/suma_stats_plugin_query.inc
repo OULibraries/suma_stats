@@ -126,7 +126,7 @@ class suma_stats_plugin_query extends views_plugin_query {
     $response = drupal_http_request($suma_url);
     $sumadataTemp = json_decode($response->data);
     //this is merging the counts from the previous results with the counts from the current results
-    $tempsumadata = (isset($sumadata->initiative)) ? array_merge($sumadataTemp->initiative->counts, $sumadata->initiative->counts) : $sumadataTemp->initiative->counts;
+    $tempsumadata = (isset($sumadata->initiative)) ? array_merge($sumadata->initiative->counts, $sumadataTemp->initiative->counts) : $sumadataTemp->initiative->counts;
     $sumadataTemp->initiative->counts = $tempsumadata;
     return $sumadataTemp;
   }

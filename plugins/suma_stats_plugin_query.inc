@@ -39,9 +39,16 @@ class suma_stats_plugin_query extends views_plugin_query {
     $startDate = $this->getStartTime($incNum, $spanOption);
 
     //pass the parameters to the api..this may need revised for more options or empty parameters
-    $suma_url = variable_get('suma_stats_server', "") . '/query/counts?id=' . $collection . '&format=%27' . $format . '%27&sdate=' . $startDate;
-    $response = drupal_http_request($suma_url);
-    $sumadata = json_decode($response->data);
+    //call the getsumadata function for as long as there are more results
+    //if something is taking up all the php memory...it is this
+    $offset = 0;
+    $hasMore = 'true';
+    $sumadata = new stdClass();
+    while ($hasMore == 'true') {
+      $sumadata = $this->getSumaData($sumadata, $offset, $collection, $format, $startDate);
+      $hasMore = $sumadata->status->{'has more'};
+      $offset = ($hasMore == 'true') ? $sumadata->status->offset : 0;
+    }
 
     //set the location to an array so that multiple locations may be passed in
     $preArrayLocation = $this->options['location'];
@@ -70,9 +77,12 @@ class suma_stats_plugin_query extends views_plugin_query {
           if ((array_filter($entActivity)) && (count(array_intersect($entry->activities, $entActivity)) == 0) && ($entActivity[0] != 'all')) {
             continue;
           }
+          //we don't want the 'no activity' results
+          //@todo we may make this an option later
+          if (in_array('-1', $entry->activities)) continue;
+
           $temp_time = $this->trunc_date($scale, $entry->time);
           $specActivity = $this->pickSpecActivity($entActivity, $entry->activities, $location->dictionary->activities);
-//          $coord = $location->title . "|" . $location->id . "|" . $temp_time;
 
           $coord = $location->title . "|" . $location->id . "|" . $temp_time . "|" . $specActivity;
 
@@ -97,6 +107,29 @@ class suma_stats_plugin_query extends views_plugin_query {
       $view->result[] = $row;
     } 
    }
+
+
+  /**
+   * @param $sumadata
+   * @param $offset
+   * @param $collection
+   * @param $format
+   * @param $startDate
+   * @return object
+   *
+   * hits the suma api and gets the results
+   * the function takes the results from this function if has been called previously
+   * the call to this function is in a 'while' loop...so it may get called a bunch of times
+   */
+  function getSumaData($sumadata, $offset, $collection, $format, $startDate) {
+    $suma_url = variable_get('suma_stats_server', "") . '/query/counts?id=' . $collection . '&format=%27' . $format . '%27&sdate=' . $startDate . '&offset=' . $offset;
+    $response = drupal_http_request($suma_url);
+    $sumadataTemp = json_decode($response->data);
+    //this is merging the counts from the previous results with the counts from the current results
+    $tempsumadata = (isset($sumadata->initiative)) ? array_merge($sumadataTemp->initiative->counts, $sumadata->initiative->counts) : $sumadataTemp->initiative->counts;
+    $sumadataTemp->initiative->counts = $tempsumadata;
+    return $sumadataTemp;
+  }
 
   /**
    * @param $scale

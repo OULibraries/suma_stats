@@ -41,13 +41,22 @@ class suma_stats_plugin_query extends views_plugin_query {
     //pass the parameters to the api..this may need revised for more options or empty parameters
     //call the getsumadata function for as long as there are more results
     //if something is taking up all the php memory...it is this
-    $offset = 0;
-    $hasMore = 'true';
-    $sumadata = new stdClass();
-    while ($hasMore == 'true') {
-      $sumadata = $this->getSumaData($sumadata, $offset, $collection, $format, $startDate);
-      $hasMore = $sumadata->status->{'has more'};
-      $offset = ($hasMore == 'true') ? $sumadata->status->offset : 0;
+//    $sumadata = &drupal_static(__FUNCTION__);
+    if (!isset($sumadata)) {
+      if ($cache = cache_get('suma_stats_data'.$collection.$incNum.$spanOption)) {
+        $sumadata = $cache->data;
+      }
+      else {
+        $offset = 0;
+        $hasMore = 'true';
+        $sumadata = new stdClass();
+        while ($hasMore == 'true') { ;
+          $sumadata = $this->getSumaData($sumadata, $offset, $collection, $format, $startDate);
+          $hasMore = $sumadata->status->{'has more'};
+          $offset = ($hasMore == 'true') ? $sumadata->status->offset : 0;
+        }
+        cache_set('suma_stats_data'.$collection.$incNum.$spanOption, $sumadata, 'cache', time() + 36000);
+      }
     }
 
     //set the location to an array so that multiple locations may be passed in

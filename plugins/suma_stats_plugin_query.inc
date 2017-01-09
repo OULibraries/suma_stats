@@ -130,12 +130,14 @@ class suma_stats_plugin_query extends views_plugin_query {
    * the function takes the results from this function if has been called previously
    * the call to this function is in a 'while' loop...so it may get called a bunch of times
    */
-  function getSumaData($sumadata, $offset, $collection, $format, $startDate) {
+  function getSumaData($sumadata, $offset, $collection, $format, $startDate) {;
     $suma_url = variable_get('suma_stats_server', "") . '/query/counts?id=' . $collection . '&format=%27' . $format . '%27&sdate=' . $startDate . '&offset=' . $offset;
     $response = drupal_http_request($suma_url);
     $sumadataTemp = json_decode($response->data);
+    $sumadataTemp->initiative->counts = isset($sumadataTemp->initiative->counts) ? $sumadataTemp->initiative->counts : array();
+
     //this is merging the counts from the previous results with the counts from the current results
-    $tempsumadata = (isset($sumadata->initiative)) ? array_merge($sumadata->initiative->counts, $sumadataTemp->initiative->counts) : $sumadataTemp->initiative->counts;
+    $tempsumadata = (isset($sumadata->initiative->counts)) ? array_merge($sumadata->initiative->counts, $sumadataTemp->initiative->counts) : $sumadataTemp->initiative->counts;
     $sumadataTemp->initiative->counts = $tempsumadata;
     return $sumadataTemp;
   }

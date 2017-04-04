@@ -8,3 +8,46 @@ function suma_stats_views_api() {
     'api' => 3.0
   );
 }
+
+/**
+ * Implements hook_menu().
+ */
+function suma_stats_menu() {
+  /* proxy settings */
+  $items['admin/config/system/suma']
+    = array(
+    'title' => 'Suma Stats report settings',
+    'description' => 'Configure settings for Suma Stats reports',
+    'page callback' => 'drupal_get_form',
+    'page arguments' => array('suma_stats_settings'),
+    'access arguments' => array('administer suma_stats settings'),
+    'weight' => -10,
+  );
+
+  return $items;
+}
+
+function suma_stats_permission() {
+  $modperms = array(
+      'administer suma_stats settings' => array(
+          'title' => t('Administer Suma Stats reports'),
+        ),
+    );
+  return $modperms;
+}
+
+function suma_stats_settings() {
+
+  $form = array();
+
+  $form['suma_stats_server'] = array(
+    '#type' => 'textfield',
+    '#title' => t('Suma Server'),
+    '#default_value' => variable_get('suma_stats_server', ""),
+    '#description' => t("Server used for the Suma api"),
+    '#required' => TRUE,
+  );
+  
+  return system_settings_form($form);
+
+}
